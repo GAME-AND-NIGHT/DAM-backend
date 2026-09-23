@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAM Media Player & Decryptor (Картины, 3D-модели, Видео)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Model Viewer for 3D GLB/GLTF Models -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <style>
+    body { background-color: #0b0f19; color: #f1f5f9; }
+    model-viewer { width: 100%; height: 500px; background-color: #030712; border-radius: 0.75rem; }
+  </style>
+</head>
+<body className="min-h-screen flex flex-col font-sans">
+  <!-- Header -->
+  <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-4">
+    <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-indigo-600/20 border border-indigo-500/40 rounded-xl text-indigo-400">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            Универсальный Медиа-Дешифратор и Проигрыватель
+            <span className="text-[10px] uppercase font-mono tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+              AES-256-CTR
+            </span>
+          </h1>
+          <p className="text-xs text-slate-400">
+            Дешифрование и просмотр зашифрованных сегментов: Картины • 3D-модели • Видео
+          </p>
+        </div>
+      </div>
+      <a href="/" className="text-xs text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1">
+        Главный Дашборд &rarr;
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main className="flex-1 max-w-6xl w-full mx-auto p-6 space-y-6">
+    <!-- Control Panel Card -->
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        <!-- URL Input -->
+        <div className="md:col-span-8 space-y-1.5">
+          <label className="text-xs font-semibold text-slate-300">
+            Ссылка на зашифрованный медиа-эндпоинт (URL):
+          </label>
+          <input
+            id="mediaUrl"
+            type="text"
+            placeholder="http://localhost:3000/painting/image/2 или /video/file/1 или /model/file/1"
+            value="/painting/image/2"
+            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-indigo-500 transition"
+          />
+        </div>
+
+        <!-- Secret Key Input -->
+        <div className="md:col-span-4 space-y-1.5">
+          <label className="text-xs font-semibold text-slate-300">
+            Секретный ключ (Passphrase):
+          </label>
+          <input
+            id="secretKey"
+            type="text"
+            value="hhghghdgfjgfgdahgd"
+            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-amber-300 font-mono focus:outline-none focus:border-indigo-500 transition"
+          />
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div className="space-y-1.5 pt-1">
+        <span className="text-xs text-slate-400">Быстрый выбор для теста:</span>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onclick="setPreset('/painting/image/2')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🖼</span> Картина #2 (Куинджи)
+          </button>
+          <button
+            onclick="setPreset('/painting/image/1')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🖼</span> Картина #1 (Брюллов)
+          </button>
+          <button
+            onclick="setPreset('/model/file/1')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🗿</span> 3D-Модель #1 (Эгирокассида)
+          </button>
+          <button
+            onclick="setPreset('/model/file/3')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🗿</span> 3D-Модель #3 (Динозавр Амурозавр)
+          </button>
+          <button
+            onclick="setPreset('/video/file/1')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🎥</span> Видео #1 (Выставка Кончаловского)
+          </button>
+          <button
+            onclick="setPreset('/video/file/4')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🎥</span> Видео #4 (История одного шедевра)
+          </button>
+          <button
+            onclick="setPreset('/video/file/5')"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <span>🎥</span> Видео #5 (ТОП-10 картин)
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button
+        id="btnStart"
+        onclick="startDecryptAndPlay()"
+        className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2 text-sm"
+      >
+        <svg id="playIcon" className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+        </svg>
+        <span id="btnText">Скачать поток, расшифровать и воспроизвести</span>
+      </button>
+
+      <!-- Progress & Status Container -->
+      <div id="statusContainer" className="hidden space-y-2 pt-2 border-t border-slate-800">
+        <div className="flex justify-between text-xs text-slate-400">
+          <span id="statusText">Загрузка сегментов...</span>
+          <span id="percentText" className="font-mono text-indigo-400">0%</span>
+        </div>
+        <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
+          <div
+            id="progressBar"
+            className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-2.5 rounded-full transition-all duration-150"
+            style="width: 0%"
+          ></div>
+        </div>
+        <div id="statsInfo" className="text-[11px] font-mono text-slate-400 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewer Output Card -->
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 id="viewerTitle" className="text-base font-semibold text-white flex items-center gap-2">
+          <span>📺</span> Область просмотра
+        </h2>
+        <div id="mediaBadge" className="hidden text-xs px-2.5 py-1 rounded-full font-mono bg-slate-800 border border-slate-700 text-slate-300">
+        </div>
+      </div>
+
+      <!-- Result Viewports -->
+      <div id="viewportEmpty" className="py-24 text-center text-slate-600 space-y-3">
+        <svg className="w-16 h-16 mx-auto text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+        <p className="text-xs">Вставьте ссылку выше и нажмите кнопку для дешифрования и просмотра</p>
+      </div>
+
+      <!-- Painting Image Container -->
+      <div id="viewportImage" className="hidden flex items-center justify-center p-4 bg-slate-950 rounded-xl border border-slate-800 min-h-[420px]">
+        <img id="imgResult" src="" alt="Decrypted Painting" className="max-h-[500px] max-w-full rounded-lg shadow-2xl object-contain" />
+      </div>
+
+      <!-- 3D Model Container -->
+      <div id="viewport3D" className="hidden bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+        <model-viewer
+          id="modelResult"
+          src=""
+          alt="Decrypted 3D Model"
+          auto-rotate
+          camera-controls
+          shadow-intensity="1"
+          ar
+        ></model-viewer>
+      </div>
+
+      <!-- Video Player Container -->
+      <div id="viewportVideo" className="hidden bg-slate-950 rounded-xl border border-slate-800 p-2 flex items-center justify-center">
+        <video
+          id="videoResult"
+          controls
+          autoplay
+          className="w-full max-h-[560px] rounded-lg shadow-2xl bg-black"
+          src=""
+        ></video>
+      </div>
+    </div>
+  </main>
+
+  <footer className="border-t border-slate-800 bg-slate-900/40 text-center py-4 text-xs text-slate-500">
+    DAM Media Decryptor Player • AES-256-CTR • Web Crypto API
+  </footer>
+
+  <!-- Decryption & Media Controller Logic -->
+  <script>
+    function setPreset(url) {
+      document.getElementById('mediaUrl').value = url;
+      startDecryptAndPlay();
+    }
+
+    async function deriveKey(passphrase) {
+      const enc = new TextEncoder();
+      const hash = await crypto.subtle.digest('SHA-256', enc.encode(passphrase));
+      return crypto.subtle.importKey(
+        'raw',
+        hash,
+        { name: 'AES-CTR' },
+        false,
+        ['decrypt']
+      );
+    }
+
+    function hexToBytes(hex) {
+      if (!hex) return new Uint8Array(16);
+      const matches = hex.match(/.{1,2}/g) || [];
+      return new Uint8Array(matches.map(b => parseInt(b, 16)));
+    }
+
+    async function startDecryptAndPlay() {
+      const urlInput = document.getElementById('mediaUrl').value.trim();
+      const keyInput = document.getElementById('secretKey').value.trim() || 'hhghghdgfjgfgdahgd';
+
+      if (!urlInput) {
+        alert('Пожалуйста, укажите ссылку на медиа-эндпоинт.');
+        return;
+      }
+
+      const btn = document.getElementById('btnStart');
+      const btnText = document.getElementById('btnText');
+      const statusContainer = document.getElementById('statusContainer');
+      const statusText = document.getElementById('statusText');
+      const percentText = document.getElementById('percentText');
+      const progressBar = document.getElementById('progressBar');
+      const statsInfo = document.getElementById('statsInfo');
+
+      // Reset viewports
+      document.getElementById('viewportEmpty').classList.remove('hidden');
+      document.getElementById('viewportImage').classList.add('hidden');
+      document.getElementById('viewport3D').classList.add('hidden');
+      document.getElementById('viewportVideo').classList.add('hidden');
+      document.getElementById('mediaBadge').classList.add('hidden');
+
+      // Stop any existing video playback
+      const videoEl = document.getElementById('videoResult');
+      videoEl.pause();
+      videoEl.src = '';
+
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+      btnText.innerText = 'Подключение к потоку...';
+      statusContainer.classList.remove('hidden');
+      progressBar.style.width = '0%';
+      percentText.innerText = '0%';
+      statusText.innerText = 'Запрос к серверу...';
+      statsInfo.innerHTML = `Подключение: <span class="text-indigo-400">${urlInput}</span>`;
+
+      try {
+        const startTime = performance.now();
+        const response = await fetch(urlInput);
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+        }
+
+        const isEncrypted = response.headers.get('X-Encrypted') === 'true';
+        const ivHex = response.headers.get('X-Encryption-IV') || '';
+        let contentType = response.headers.get('X-Original-Content-Type') || response.headers.get('Content-Type') || '';
+        const totalSize = parseInt(response.headers.get('X-Total-Size') || response.headers.get('Content-Length') || '0', 10);
+
+        // Fallback detection by URL
+        if (!contentType || contentType.includes('octet-stream')) {
+          if (urlInput.includes('/painting/') || urlInput.endsWith('.jpg') || urlInput.endsWith('.png')) {
+            contentType = 'image/jpeg';
+          } else if (urlInput.includes('/model/') || urlInput.endsWith('.glb')) {
+            contentType = 'model/gltf-binary';
+          } else if (urlInput.includes('/video/') || urlInput.endsWith('.mp4')) {
+            contentType = 'video/mp4';
+          } else {
+            contentType = 'image/jpeg';
+          }
+        }
+
+        statusText.innerText = `Получение сегментов потока...`;
+        statsInfo.innerHTML = `Шифрование: <strong class="text-emerald-400">${isEncrypted ? 'AES-256-CTR' : 'None'}</strong> | IV: <span class="text-amber-300 font-mono">${ivHex || '—'}</span> | Тип: <span class="text-indigo-300">${contentType}</span>`;
+
+        const reader = response.body ? response.body.getReader() : null;
+        const chunks = [];
+        let receivedBytes = 0;
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedBytes += value.length;
+
+            const percent = totalSize ? Math.min(100, Math.round((receivedBytes / totalSize) * 100)) : 100;
+            progressBar.style.width = `${percent}%`;
+            percentText.innerText = `${percent}%`;
+            statusText.innerText = `Получено сегментов: ${chunks.length} (${(receivedBytes / (1024 * 1024)).toFixed(2)} MB)`;
+          }
+        } else {
+          const buf = await response.arrayBuffer();
+          chunks.push(new Uint8Array(buf));
+          receivedBytes = buf.byteLength;
+          progressBar.style.width = `100%`;
+          percentText.innerText = `100%`;
+        }
+
+        // Combine
+        statusText.innerText = 'Дешифрование байтов через Web Crypto API...';
+        const allBytes = new Uint8Array(receivedBytes);
+        let pos = 0;
+        for (const c of chunks) {
+          allBytes.set(c, pos);
+          pos += c.length;
+        }
+
+        let finalBuffer = allBytes.buffer;
+
+        if (isEncrypted && ivHex) {
+          const cryptoKey = await deriveKey(keyInput);
+          const ivBytes = hexToBytes(ivHex);
+          finalBuffer = await crypto.subtle.decrypt(
+            { name: 'AES-CTR', counter: ivBytes, length: 128 },
+            cryptoKey,
+            allBytes
+          );
+        }
+
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        const finalSizeMB = (finalBuffer.byteLength / (1024 * 1024)).toFixed(2);
+
+        statusText.innerText = `✅ Успешно расшифровано за ${elapsed}с (${finalSizeMB} MB)`;
+        progressBar.style.width = '100%';
+        percentText.innerText = 'Готово';
+
+        // Display in appropriate viewer
+        document.getElementById('viewportEmpty').classList.add('hidden');
+        const badge = document.getElementById('mediaBadge');
+        badge.classList.remove('hidden');
+
+        const blob = new Blob([finalBuffer], { type: contentType });
+        const blobUrl = URL.createObjectURL(blob);
+
+        if (contentType.includes('image')) {
+          badge.innerText = `Картина (JPEG • ${finalSizeMB} MB)`;
+          const imgEl = document.getElementById('imgResult');
+          imgEl.src = blobUrl;
+          document.getElementById('viewportImage').classList.remove('hidden');
+          document.getElementById('viewerTitle').innerHTML = `<span>🖼</span> Просмотр Картины`;
+        } else if (contentType.includes('gltf') || contentType.includes('model')) {
+          badge.innerText = `3D-Модель (GLB • ${finalSizeMB} MB)`;
+          const modelEl = document.getElementById('modelResult');
+          modelEl.src = blobUrl;
+          document.getElementById('viewport3D').classList.remove('hidden');
+          document.getElementById('viewerTitle').innerHTML = `<span>🗿</span> Интерактивный 3D-Просмотрщик (WebGL)`;
+        } else if (contentType.includes('video') || contentType.includes('mp4')) {
+          badge.innerText = `Видео (MP4 • ${finalSizeMB} MB)`;
+          videoEl.src = blobUrl;
+          document.getElementById('viewportVideo').classList.remove('hidden');
+          document.getElementById('viewerTitle').innerHTML = `<span>🎥</span> Видеоплеер (HTML5)`;
+          videoEl.play().catch(e => console.log('Autoplay prevented:', e));
+        } else {
+          // Default to image or video
+          badge.innerText = `Медиа (${contentType})`;
+          const imgEl = document.getElementById('imgResult');
+          imgEl.src = blobUrl;
+          document.getElementById('viewportImage').classList.remove('hidden');
+        }
+
+      } catch (err) {
+        console.error(err);
+        statusText.innerText = `❌ Ошибка: ${err.message}`;
+        statsInfo.innerHTML += `<div class="text-rose-400 mt-1">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+        btnText.innerText = 'Скачать поток, расшифровать и воспроизвести';
+      }
+    }
+  </script>
+</body>
+</html>
