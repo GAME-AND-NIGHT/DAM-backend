@@ -9,7 +9,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const rawId = params.id;
+    let id = rawId;
+    try {
+      id = decodeURIComponent(rawId);
+    } catch {}
+
     const { video, infoData } = getVideoById(id);
 
     if (!video) {

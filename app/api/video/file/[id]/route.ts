@@ -16,7 +16,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const rawId = params.id;
+    let id = rawId;
+    try {
+      id = decodeURIComponent(rawId);
+    } catch {}
+
     const { searchParams } = new URL(request.url);
 
     const { video, videoPath } = getVideoById(id);
@@ -38,10 +43,34 @@ export async function GET(
     const ivHex = baseIV.toString('hex');
     const totalChunks = Math.ceil(totalSize / chunkSize);
 
-    // Unencrypted raw fallback for standard video tags
+    // Unencrypted raw fallback for standard HTML5 video tags (supports Range requests)
     if (isRaw) {
-      const fileBuffer = fs.readFileSync(videoPath);
-      return new Response(fileBuffer, {
+      const rangeHeader = request.headers.get('range');
+      if (rangeHeader) {
+        const parts = rangeHeader.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+        const chunkLength = end - start + 1;
+
+        const nodeStream = fs.createReadStream(videoPath, { start, end });
+        const webStream = nodeStreamToWebStream(nodeStream);
+
+        return new Response(webStream, {
+          status: 206,
+          headers: {
+            'Content-Type': 'video/mp4',
+            'Content-Range': `bytes ${start}-${end}/${totalSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunkLength.toString(),
+            'Content-Disposition': `inline; filename="${encodeURIComponent(video.file_name)}"`,
+            'Cache-Control': 'public, max-age=86400',
+          },
+        });
+      }
+
+      const nodeStream = fs.createReadStream(videoPath);
+      const webStream = nodeStreamToWebStream(nodeStream);
+      return new Response(webStream, {
         headers: {
           'Content-Type': 'video/mp4',
           'Content-Length': totalSize.toString(),
@@ -64,8 +93,16 @@ export async function GET(
 
       const start = chunkIndex * chunkSize;
       const end = Math.min(start + chunkSize, totalSize);
-      const fileBuffer = fs.readFileSync(videoPath);
-      const encryptedSegment = encryptChunk(fileBuffer, start, end, baseIV);
+      
+      // Efficiently read only needed bytes from disk
+      const alignedStart = Math.floor(start / 16) * 16;
+      const readLength = end - alignedStart;
+      const readBuffer = Buffer.alloc(readLength);
+      const fd = fs.openSync(videoPath, 'r');
+      fs.readSync(fd, readBuffer, 0, readLength, alignedStart);
+      fs.closeSync(fd);
+
+      const encryptedSegment = encryptChunk(readBuffer, start - alignedStart, end - alignedStart, baseIV);
 
       return new Response(encryptedSegment, {
         headers: {

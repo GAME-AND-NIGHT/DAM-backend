@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    '/api/**/*': ['./data/**/*'],
+  },
   async rewrites() {
     return [
       {
