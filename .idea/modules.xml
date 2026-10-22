@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/DAM-backend.iml" filepath="$PROJECT_DIR$/.idea/DAM-backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/server-dam.iml" filepath="$PROJECT_DIR$/.idea/server-dam.iml" />
     </modules>
   </component>
 </project>

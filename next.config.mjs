@@ -43,6 +43,18 @@ const nextConfig = {
         source: '/video/list',
         destination: '/api/video/list',
       },
+      {
+        source: '/audio/:path*',
+        destination: '/api/audio/file/:path*',
+      },
+      {
+        source: '/quest/data',
+        destination: '/api/quest/data',
+      },
+      {
+        source: '/quest_data.json',
+        destination: '/api/quest/data',
+      },
     ];
   },
   async headers() {

@@ -42,6 +42,14 @@ export async function GET(request: NextRequest) {
           videos_list: '/video/list',
         },
       },
+      audio_collection: {
+        name: 'Аудиогид квеста (MP3 озвучка вопросов и ответов гида)',
+        sample_endpoints: {
+          audio_stream: '/audio/station2/q01_question.mp3',
+          audio_encrypted_stream: '/audio/station2/q01_question.mp3?encrypted=true',
+          quest_data: '/quest/data',
+        },
+      },
       encryption_spec: {
         cipher: 'AES-256-CTR',
         key_passphrase: 'hhghghdgfjgfgdahgd',

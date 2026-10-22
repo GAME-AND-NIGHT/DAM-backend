@@ -107,6 +107,42 @@ export function getVideosDir(): string {
   return path.join(getDataDir(), 'videos');
 }
 
+export function getAudioDir(): string {
+  return path.join(getDataDir(), 'audio');
+}
+
+export function getAvatarDir(): string {
+  const dataAvatar = path.join(getDataDir(), 'avatar');
+  if (fs.existsSync(dataAvatar)) return dataAvatar;
+  const publicAvatar = path.join(process.cwd(), 'public', 'models', 'avatar');
+  if (fs.existsSync(publicAvatar)) return publicAvatar;
+  return dataAvatar;
+}
+
+export function getAvatarFile(relPath: string = 'avatar.glb'): { filePath: string | null; fileName: string; sizeBytes: number; exists: boolean } {
+  const avatarDir = getAvatarDir();
+  const filePath = path.join(avatarDir, relPath);
+  if (fs.existsSync(filePath)) {
+    const stat = fs.statSync(filePath);
+    return {
+      filePath,
+      fileName: path.basename(filePath),
+      sizeBytes: stat.size,
+      exists: true,
+    };
+  }
+  return {
+    filePath: null,
+    fileName: relPath,
+    sizeBytes: 0,
+    exists: false,
+  };
+}
+
+export function getQuestDataPath(): string {
+  return path.join(getDataDir(), 'quest_data.json');
+}
+
 let cachedPaintings: PaintingItem[] | null = null;
 let cachedModels: ModelItem[] | null = null;
 let cachedVideos: VideoItem[] | null = null;
@@ -403,3 +439,81 @@ export function getVideoById(idOrName: string | number): {
     infoData: found,
   };
 }
+
+/**
+ * Resolves an audio file from data/audio by its relative path (e.g. station2/q01_question.mp3)
+ */
+export function getAudioFile(relativePath: string): {
+  audioPath: string | null;
+  fileName: string;
+  sizeBytes: number;
+} {
+  const audioDir = getAudioDir();
+  // Sanitize path to prevent directory traversal
+  const cleanRel = relativePath
+    .replace(/^(\.\.[\/\\])+/, '')
+    .replace(/^[\\\/]+/, '')
+    .replace(/\\/g, '/');
+
+  const targetPath = path.join(audioDir, cleanRel);
+
+  if (fs.existsSync(targetPath) && fs.statSync(targetPath).isFile()) {
+    const stat = fs.statSync(targetPath);
+    return {
+      audioPath: targetPath,
+      fileName: path.basename(targetPath),
+      sizeBytes: stat.size,
+    };
+  }
+
+  return {
+    audioPath: null,
+    fileName: path.basename(cleanRel),
+    sizeBytes: 0,
+  };
+}
+
+/**
+ * Reads and returns quest_data.json
+ */
+export function getQuestData(): any {
+  const qPath = getQuestDataPath();
+  if (fs.existsSync(qPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(qPath, 'utf8'));
+    } catch (e) {
+      console.error('Error parsing quest_data.json:', e);
+    }
+  }
+  return null;
+}
+
+/**
+ * Lists all audio stations and files
+ */
+export function getAudioCatalog(): {
+  total_files: number;
+  stations: { [key: string]: number };
+} {
+  const audioDir = getAudioDir();
+  const summary: { [key: string]: number } = {};
+  let total = 0;
+
+  if (fs.existsSync(audioDir)) {
+    const entries = fs.readdirSync(audioDir, { withFileTypes: true });
+    for (const ent of entries) {
+      if (ent.isDirectory()) {
+        const subDir = path.join(audioDir, ent.name);
+        const files = fs.readdirSync(subDir).filter(f => f.endsWith('.mp3'));
+        summary[ent.name] = files.length;
+        total += files.length;
+      }
+    }
+  }
+
+  return {
+    total_files: total,
+    stations: summary,
+  };
+}
+
